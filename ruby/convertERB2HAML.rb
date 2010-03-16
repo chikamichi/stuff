@@ -2,7 +2,7 @@
 
 # This script is a erb2haml conversion wrapper.
 # Run 'ruby convertERB2HAML.rb -h' to learn more.
-# There's a kind of procedural programming to it, but it works anyway :)
+# There's a kind of procedural programming feeling to it, but it works nonetheless :)
 
 require 'fileutils'
 require 'pathname'
