@@ -1,5 +1,8 @@
 #!/usr/bin/ruby
 
+# This script is a erb2haml conversion wrapper.
+# Run 'ruby convertERB2HAML.rb -h' to learn more.
+
 require 'fileutils'
 require 'pathname'
 require 'optparse'
@@ -149,17 +152,20 @@ files by hand to correct indentation, for example.
     end
   end
 
-  def self.get_backup_location_for(path, options)
-    backup_location = if options[:inner]
+  def self.get_backup_location_for(path)
+    # case 1: backup within the same location
+    backup_location = if @@options[:inner]
       # actually backup_location is a filename in this case
       Pathname.new(path.to_s + ".bak")
     else
       relative = path.relative_path_from(Pathname.getwd)
 
-      if options[:backup_location]
+      # case 2: backup in a specific location
+      if @@options[:backup_location]
         backdir = Pathname.new(@@backup_location.to_s + "/" + relative.dirname.to_s)
         backdir.mkpath
         backdir
+      # case 3: backup in *.bak directories in the working directory
       else
         pathy = []
         # say relative is #<Pathname:app/views/test1.html.erb>
@@ -199,7 +205,7 @@ files by hand to correct indentation, for example.
   end
 
   def self.backup_file(path)
-    backdir = get_backup_location_for(path, @@options)
+    backdir = get_backup_location_for(path)
     puts if @@options[:verbose]
     FileUtils.cp_r(path, backdir, :verbose => @@options[:verbose])
   end
