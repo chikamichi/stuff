@@ -234,6 +234,7 @@ files by hand to correct indentation, for example.
 
     [@@list[:directories], @@list[:files]].flatten.each do |path|
       path = Pathname.new(path).realpath 
+      @@external_backup_initialized = false if @@external_backup_initialized
 
       if @@options[:verbose]
         puts
