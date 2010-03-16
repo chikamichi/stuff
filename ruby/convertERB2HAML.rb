@@ -27,11 +27,11 @@ class Pathname
         if current.directory?
           current.visit { |e| yield e }
         else
-          yield current.realpath
+          yield current
         end
       end
     else
-      yield self.realpath
+      yield self
     end
   end
 end
@@ -77,13 +77,7 @@ class ERB2HAML
       backup_location_desc = %{Backup defaults to directory.bak, but you can specify another location. Be aware it will be erased w/o any warning!}
       opts.on('--location [directory]', String, backup_location_desc) do |backup_location|
         @@options[:backup_location] = true
-        @@backup_location = Pathname.new(backup_location) # solid, real directory pathname :)
-        if @@backup_location.exist?
-          shall_purge?(@@backup_location)
-        else
-          @@backup_location.mkpath
-        end
-        @@backup_location = @@backup_location.realpath
+        @@backup_location = Pathname.new(backup_location) # solid, real directory pathname :) 
       end
 
       opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
@@ -109,26 +103,15 @@ files by hand to correct indentation, for example.
 
     begin
       optparse.parse!
+      check_for_arg_collisions
+      handle_backup
     rescue OptionParser::InvalidOption => msg
       puts msg
       exit
     end
-
-    # common errors
-    if ARGV.length == 0
-      puts "Error: No data provided. You may read the help (--help) to learn more about this script."
-    end 
-
-    if @@options[:inner] and @@options[:backup_location]
-      puts "Error: Cannot use a specific backup location and the 'inner' option at the same time."
-      exit
-    end
-
-    if @@options[:clean] and (@@options[:preserve] || @@options[:backup_location] || @@options[:inner])
-      puts "Error: Cannot use both 'clean' and any backup options at the same time."
-      exit
-    end
-
+   
+ 
+ 
     if ARGV.include? "."
       # well, let's just KISS
       puts "Error: won't process . as a whole. Please specify your target directories."
@@ -151,6 +134,36 @@ files by hand to correct indentation, for example.
         @@list[:files] << path
       end
     end
+  end
+  
+  def self.check_for_arg_collisions
+    if ARGV.length == 0
+      puts "Error: No data provided. You may read the help (--help) to learn more about this script."
+      exit
+    end 
+
+    if @@options[:inner] and @@options[:backup_location]
+      puts "Error: Cannot use a specific backup location and the 'inner' option at the same time."
+      exit
+    end
+
+    if @@options[:clean] and (@@options[:preserve] || @@options[:backup_location] || @@options[:inner])
+      puts "Error: Cannot use both 'clean' and any backup options at the same time."
+      exit
+    end
+  end
+
+  def self.handle_backup
+   if @@options[:preserve]
+     puts "Warning: 'preserve' option's on, ignoring external backup location"
+   else
+    if @@backup_location.exist?
+        shall_purge?(@@backup_location)
+      else
+        @@backup_location.mkpath
+      end
+      @@backup_location = @@backup_location.realpath
+   end
   end
 
   def self.get_backup_location_for(path)
