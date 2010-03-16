@@ -164,17 +164,18 @@ files by hand to correct indentation, for example.
       # case 2: backup in a specific location
       if @@options[:backup_location]
         backdir = Pathname.new(@@backup_location.to_s + "/" + relative.dirname.to_s)
-        backdir.mkpath
+        backdir.mkpath # behaves like mkdir -p, that is silently create nested directories
+                       # and does not complain about already existing ones
         backdir
       # case 3: backup in *.bak directories in the working directory
       else
         pathy = []
-        # say relative is #<Pathname:app/views/test1.html.erb>
+        # say relative is #<Pathname:app/views/inner/folder/test1.html.erb>
         relative.ascend { |v| pathy << v.basename }
         # then...
         relative_base = pathy.pop # #<Pathname:app>
         pathy.reverse!.pop # ascending (path) order, and get rid of the filename btw
-        relative_subbase = pathy.join("/") # "views/inner/encore" (as a string, not a Pathname object)
+        relative_subbase = pathy.join("/") # "views/inner/folder" (as a string, not a Pathname object)
 
         backdir = Pathname.new(Pathname.getwd.to_s + "/" + relative_base.to_s + ".bak" + "/" + relative_subbase)
         shall_purge?(backdir)
