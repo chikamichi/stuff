@@ -20,14 +20,17 @@ class Pathname
   #
   # TODO: add an option to allow including or avoiding directories
   def visit
+    # let's memoize those, object instanciation's not so cheap these days
+    @@avoided_pathnames_for_visit ||= [Pathname.new("."), Pathname.new("..")]
+
     if self.realpath.directory?
-      self.entries.each do |e|
-        next if e == Pathname.new(".") || e == Pathname.new("..")
-        current = Pathname.new(Pathname(self.to_s) + e)
-        if current.directory?
-          current.visit { |e| yield e }
+      self.entries.each do |entry|
+        next if @@avoided_pathnames_for_visit.include? entry
+        current_entry = Pathname.new(Pathname(self.to_s) + entry)
+        if current_entry.directory?
+          current_entry.visit { |sub_entry| yield sub_entry }
         else
-          yield current
+          yield current_entry
         end
       end
     else
@@ -154,9 +157,11 @@ files by hand to correct indentation, for example.
   end
 
   def self.handle_backup
-   if @@options[:preserve]
+   if @@options[:preserve] && @@options[:backup_location]
      puts "Warning: 'preserve' option's on, ignoring external backup location"
-   else
+   end
+   
+   unless @@options[:preserve]
     if @@backup_location.exist?
         shall_purge?(@@backup_location)
       else
